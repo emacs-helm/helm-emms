@@ -2,7 +2,8 @@
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
-;; Package-Requires: ((helm "1.5"))
+;; Version: 1.6.8
+;; Package-Requires: ((helm "1.5") (emms "0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
