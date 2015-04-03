@@ -24,6 +24,7 @@
 (require 'helm)
 
 (declare-function emms-streams "ext:emms-streams")
+(declare-function emms-stream-init "ext:emms-streams")
 (declare-function emms-stream-delete-bookmark "ext:emms-streams")
 (declare-function emms-stream-add-bookmark "ext:emms-streams" (name url fd type))
 (declare-function emms-stream-save-bookmarks-file "ext:emms-streams")
@@ -88,6 +89,7 @@
 (defvar helm-source-emms-streams
   '((name . "Emms Streams")
     (init . (lambda ()
+              (require 'emms-streams)
               (emms-stream-init)))
     (candidates . (lambda ()
                     (mapcar 'car emms-stream-list)))
