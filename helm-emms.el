@@ -44,6 +44,13 @@
   "Face used for tracks in current emms playlist."
   :group 'helm-emms)
 
+(defcustom helm-emms-use-track-description-function nil
+  "If non-nil, use `emms-track-description-function'.
+If you have defined a custom function for track descriptions, you
+may want to use it in helm-emms as well."
+  :group 'helm-emms
+  :type 'boolean)
+
 
 (defvar emms-stream-list)
 (defun helm-emms-stream-edit-bookmark (elm)
@@ -154,7 +161,9 @@
                           for genre     = (or (assoc-default 'info-genre v) "unknown")
                           for tracknum  = (or (assoc-default 'info-tracknumber v) "unknown")
                           for song      = (or (assoc-default 'info-title v) "unknown")
-                          for info      = (concat artist " - " genre " - " tracknum ": " song)
+                          for info      = (if helm-emms-use-track-description-function
+                                              (funcall emms-track-description-function v)
+                                            (concat artist " - " genre " - " tracknum ": " song))
                           unless (string-match "^\\(http\\|mms\\):" name)
                           collect (cons info name))))
     (filtered-candidate-transformer . helm-emms-files-modifier)
