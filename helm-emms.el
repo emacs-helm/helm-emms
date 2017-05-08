@@ -94,49 +94,49 @@ may want to use it in helm-emms as well."
                            (emms-stream-quit)))))))
 
 (defvar helm-source-emms-streams
-  '((name . "Emms Streams")
-    (init . (lambda ()
-              (require 'emms-streams)
-              (emms-stream-init)))
-    (candidates . (lambda ()
-                    (mapcar 'car emms-stream-list)))
-    (action . (("Play" . (lambda (elm)
-                           (let* ((stream (assoc elm emms-stream-list))
-                                  (fn (intern (concat "emms-play-" (symbol-name (car (last stream))))))
-                                  (url (cl-second stream)))
-                             (funcall fn url))))
-               ("Delete" . helm-emms-stream-delete-bookmark)
-               ("Edit" . helm-emms-stream-edit-bookmark)))
-    (filtered-candidate-transformer . helm-adaptive-sort)))
+  (helm-build-sync-source "Emms Streams"
+    :init (lambda ()
+            (require 'emms-streams)
+            (emms-stream-init))
+    :candidates (lambda ()
+                  (mapcar 'car emms-stream-list))
+    :action '(("Play" . (lambda (elm)
+                          (let* ((stream (assoc elm emms-stream-list))
+                                 (fn (intern (concat "emms-play-" (symbol-name (car (last stream))))))
+                                 (url (cl-second stream)))
+                            (funcall fn url))))
+              ("Delete" . helm-emms-stream-delete-bookmark)
+              ("Edit" . helm-emms-stream-edit-bookmark))
+    :filtered-candidate-transformer 'helm-adaptive-sort))
 
 ;; Don't forget to set `emms-source-file-default-directory'
 (defvar helm-source-emms-dired
-  '((name . "Music Directory")
-    (candidates . (lambda ()
-                    (cddr (directory-files emms-source-file-default-directory))))
-    (action .
-     (("Play Directory" . (lambda (item)
-                            (emms-play-directory
-                             (expand-file-name
-                              item
-                              emms-source-file-default-directory))))
-      ("Open dired in file's directory" . (lambda (item)
-                                            (helm-open-dired
-                                             (expand-file-name
-                                              item
-                                              emms-source-file-default-directory))))))
-    (filtered-candidate-transformer . helm-adaptive-sort)))
+  (helm-build-sync-source "Music Directory"
+    :candidates (lambda ()
+                  (cddr (directory-files emms-source-file-default-directory)))
+    :action
+     '(("Play Directory" . (lambda (item)
+                             (emms-play-directory
+                              (expand-file-name
+                               item
+                               emms-source-file-default-directory))))
+       ("Open dired in file's directory" . (lambda (item)
+                                             (helm-open-dired
+                                              (expand-file-name
+                                               item
+                                               emms-source-file-default-directory)))))
+    :filtered-candidate-transformer 'helm-adaptive-sort))
 
 (defvar helm-emms-current-playlist nil)
 (defun helm-emms-files-modifier (candidates _source)
   (cl-loop for i in candidates
-        if (member (cdr i) helm-emms-current-playlist)
-        collect (cons (propertize (car i)
-                                  'face 'helm-emms-playlist)
-                      (cdr i))
-        into lis
-        else collect i into lis
-        finally return (reverse lis)))
+           if (member (cdr i) helm-emms-current-playlist)
+           collect (cons (propertize (car i)
+                                     'face 'helm-emms-playlist)
+                         (cdr i))
+           into lis
+           else collect i into lis
+           finally return (reverse lis)))
 
 (defun helm-emms-play-current-playlist ()
   "Play current playlist."
@@ -144,40 +144,40 @@ may want to use it in helm-emms as well."
   (emms-playlist-mode-play-smart))
 
 (defvar helm-source-emms-files
-  '((name . "Emms files")
-    (init . (lambda ()
-              (setq helm-emms-current-playlist
-                    (with-current-emms-playlist
-                      (cl-loop with cur-list = (emms-playlist-tracks-in-region
-                                                (point-min) (point-max))
-                            for i in cur-list
-                            for name = (assoc-default 'name i)
-                            when name
-                            collect name)))))
-    (candidates . (lambda ()
-                    (cl-loop for v being the hash-values in emms-cache-db
-                          for name      = (assoc-default 'name v)
-                          for artist    = (or (assoc-default 'info-artist v) "unknown")
-                          for genre     = (or (assoc-default 'info-genre v) "unknown")
-                          for tracknum  = (or (assoc-default 'info-tracknumber v) "unknown")
-                          for song      = (or (assoc-default 'info-title v) "unknown")
-                          for info      = (if helm-emms-use-track-description-function
-                                              (funcall emms-track-description-function v)
-                                            (concat artist " - " genre " - " tracknum ": " song))
-                          unless (string-match "^\\(http\\|mms\\):" name)
-                          collect (cons info name))))
-    (filtered-candidate-transformer . helm-emms-files-modifier)
-    (candidate-number-limit . 9999)
-    (action . (("Play file" . emms-play-file)
-               ("Add to Playlist and play (C-u clear current)"
-                . (lambda (candidate)
-                    (with-current-emms-playlist
-                      (when helm-current-prefix-arg
-                        (emms-playlist-current-clear))
-                      (emms-playlist-new)
-                      (mapc 'emms-add-playlist-file (helm-marked-candidates))
-                      (unless emms-player-playing-p
-                        (helm-emms-play-current-playlist)))))))))
+  (helm-build-sync-source "Emms files"
+    :init (lambda ()
+            (setq helm-emms-current-playlist
+                  (with-current-emms-playlist
+                    (cl-loop with cur-list = (emms-playlist-tracks-in-region
+                                              (point-min) (point-max))
+                             for i in cur-list
+                             for name = (assoc-default 'name i)
+                             when name
+                             collect name))))
+    :candidates (lambda ()
+                  (cl-loop for v being the hash-values in emms-cache-db
+                           for name      = (assoc-default 'name v)
+                           for artist    = (or (assoc-default 'info-artist v) "unknown")
+                           for genre     = (or (assoc-default 'info-genre v) "unknown")
+                           for tracknum  = (or (assoc-default 'info-tracknumber v) "unknown")
+                           for song      = (or (assoc-default 'info-title v) "unknown")
+                           for info      = (if helm-emms-use-track-description-function
+                                               (funcall emms-track-description-function v)
+                                             (concat artist " - " genre " - " tracknum ": " song))
+                           unless (string-match "^\\(http\\|mms\\):" name)
+                           collect (cons info name)))
+    :filtered-candidate-transformer 'helm-emms-files-modifier
+    :candidate-number-limit 9999
+    :action '(("Play file" . emms-play-file)
+              ("Add to Playlist and play (C-u clear current)"
+               . (lambda (candidate)
+                   (with-current-emms-playlist
+                     (when helm-current-prefix-arg
+                       (emms-playlist-current-clear))
+                     (emms-playlist-new)
+                     (mapc 'emms-add-playlist-file (helm-marked-candidates))
+                     (unless emms-player-playing-p
+                       (helm-emms-play-current-playlist))))))))
 
 ;;;###autoload
 (defun helm-emms ()
