@@ -33,6 +33,9 @@
 (declare-function emms-playlist-tracks-in-region "ext:emms" (beg end))
 (declare-function emms-playlist-first "ext:emms")
 (declare-function emms-playlist-mode-play-smart "ext:emms-playlist-mode")
+(defvar emms-source-file-default-directory)
+(defvar emms-track-description-function)
+(defvar emms-cache-db)
 
 
 (defgroup helm-emms nil
