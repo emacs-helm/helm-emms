@@ -39,6 +39,7 @@
 (defvar emms-track-description-function)
 (defvar emms-cache-db)
 (defvar emms-playlist-buffer)
+(defvar emms-stream-list)
 
 
 (defgroup helm-emms nil
@@ -58,7 +59,6 @@ may want to use it in helm-emms as well."
   :type 'boolean)
 
 
-(defvar emms-stream-list)
 (defun helm-emms-stream-edit-bookmark (elm)
   "Change the information of current emms-stream bookmark from helm."
   (let* ((cur-buf helm-current-buffer)
@@ -116,13 +116,16 @@ may want to use it in helm-emms as well."
     :filtered-candidate-transformer 'helm-adaptive-sort))
 
 ;; Don't forget to set `emms-source-file-default-directory'
+(defvar helm-emms--dired-cache nil)
 (defvar helm-source-emms-dired
   (helm-build-sync-source "Music Directory"
-    :candidates (lambda ()
+    :init (lambda ()
+            (setq helm-emms--dired-cache
                   (helm-walk-directory
                    emms-source-file-default-directory
                    :directories 'only
-                   :path 'full))
+                   :path 'full)))
+    :candidates 'helm-emms--dired-cache
     :action
     '(("Play Directory" . (lambda (directory)
                             (emms-play-directory directory)))
