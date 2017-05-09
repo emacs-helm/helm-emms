@@ -168,7 +168,7 @@ may want to use it in helm-emms as well."
                       (not (buffer-live-p emms-playlist-buffer)))
               (setq emms-playlist-buffer (emms-playlist-new)))
             (setq helm-emms-current-playlist
-                  (with-current-emms-playlist
+                  (with-current-buffer emms-playlist-buffer
                     (cl-loop with cur-list = (emms-playlist-tracks-in-region
                                               (point-min) (point-max))
                              for i in cur-list
