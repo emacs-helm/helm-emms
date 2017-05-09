@@ -33,9 +33,12 @@
 (declare-function emms-playlist-tracks-in-region "ext:emms" (beg end))
 (declare-function emms-playlist-first "ext:emms")
 (declare-function emms-playlist-mode-play-smart "ext:emms-playlist-mode")
+(declare-function emms-playlist-new "ext:emms" (&optional name))
+(declare-function emms-player-simple-regexp "ext:emms-player-simple" (&rest extensions))
 (defvar emms-source-file-default-directory)
 (defvar emms-track-description-function)
 (defvar emms-cache-db)
+(defvar emms-playlist-buffer)
 
 
 (defgroup helm-emms nil
@@ -116,19 +119,31 @@ may want to use it in helm-emms as well."
 (defvar helm-source-emms-dired
   (helm-build-sync-source "Music Directory"
     :candidates (lambda ()
-                  (cddr (directory-files emms-source-file-default-directory)))
+                  (helm-walk-directory
+                   emms-source-file-default-directory
+                   :directories 'only
+                   :path 'full))
     :action
-     '(("Play Directory" . (lambda (item)
-                             (emms-play-directory
-                              (expand-file-name
-                               item
-                               emms-source-file-default-directory))))
-       ("Open dired in file's directory" . (lambda (item)
-                                             (helm-open-dired
-                                              (expand-file-name
-                                               item
-                                               emms-source-file-default-directory)))))
+    '(("Play Directory" . (lambda (directory)
+                            (emms-play-directory directory)))
+      ("Open dired in file's directory"
+       . (lambda (item)
+           (helm-open-dired
+            (expand-file-name
+             item
+             emms-source-file-default-directory)))))
+    :candidate-transformer 'helm-emms-dired-transformer
     :filtered-candidate-transformer 'helm-adaptive-sort))
+
+(defun helm-emms-dired-transformer (candidates)
+  (cl-loop for d in candidates
+           when (directory-files
+                 d nil
+                 (format ".*%s" (emms-player-simple-regexp
+                                 "m3u" "ogg" "flac" "mp3"
+                                 "wav" "mod" "au" "aiff"))
+                 t)
+           collect d))
 
 (defvar helm-emms-current-playlist nil)
 (defun helm-emms-files-modifier (candidates _source)
