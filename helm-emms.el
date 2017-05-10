@@ -5,6 +5,8 @@
 ;; Version: 1.6.8
 ;; Package-Requires: ((helm "1.5") (emms "0.0") (cl-lib "0.5") (emacs "24.1"))
 
+;; X-URL: https://github.com/emacs-helm/helm-emms
+
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
