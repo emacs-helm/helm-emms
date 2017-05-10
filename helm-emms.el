@@ -35,6 +35,8 @@
 (declare-function emms-playlist-mode-play-smart "ext:emms-playlist-mode")
 (declare-function emms-playlist-new "ext:emms" (&optional name))
 (declare-function emms-player-simple-regexp "ext:emms-player-simple" (&rest extensions))
+(declare-function emms-browser-make-cover "ext:emms-browser")
+(defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
 (defvar emms-track-description-function)
 (defvar emms-cache-db)
@@ -140,13 +142,20 @@ may want to use it in helm-emms as well."
 
 (defun helm-emms-dired-transformer (candidates)
   (cl-loop for d in candidates
+           for cover = (pcase (expand-file-name "cover_small.jpg" d)
+                         ((and c (pred file-exists-p)) c)
+                         (_ (car emms-browser-default-covers)))
            when (directory-files
                  d nil
                  (format ".*%s" (emms-player-simple-regexp
                                  "m3u" "ogg" "flac" "mp3"
                                  "wav" "mod" "au" "aiff"))
                  t)
-           collect d))
+           collect (if cover
+                       (cons (concat (emms-browser-make-cover cover)
+                                     (helm-basename d))
+                             d)
+                     d)))
 
 (defvar helm-emms-current-playlist nil)
 (defun helm-emms-files-modifier (candidates _source)
