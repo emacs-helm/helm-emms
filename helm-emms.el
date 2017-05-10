@@ -164,29 +164,30 @@ may want to use it in helm-emms as well."
            collect (cons (propertize (car i)
                                      'face 'helm-emms-playlist)
                          (cdr i))
-           into lis
-           else collect i into lis
-           finally return (reverse lis)))
+           into currents
+           else collect i into others
+           finally return (append (reverse currents)
+                                  (reverse others))))
 
 (defun helm-emms-play-current-playlist ()
   "Play current playlist."
   (emms-playlist-first)
   (emms-playlist-mode-play-smart))
 
+(defun helm-emms-set-current-playlist ()
+  (when (or (not emms-playlist-buffer)
+            (not (buffer-live-p emms-playlist-buffer)))
+    (setq emms-playlist-buffer (emms-playlist-new)))
+  (setq helm-emms-current-playlist
+        (with-current-buffer emms-playlist-buffer
+          (cl-loop for i in (emms-playlist-tracks-in-region
+                             (point-min) (point-max))
+                   when (assoc-default 'name i)
+                   collect it))))
+
 (defvar helm-source-emms-files
   (helm-build-sync-source "Emms files"
-    :init (lambda ()
-            (when (or (not emms-playlist-buffer)
-                      (not (buffer-live-p emms-playlist-buffer)))
-              (setq emms-playlist-buffer (emms-playlist-new)))
-            (setq helm-emms-current-playlist
-                  (with-current-buffer emms-playlist-buffer
-                    (cl-loop with cur-list = (emms-playlist-tracks-in-region
-                                              (point-min) (point-max))
-                             for i in cur-list
-                             for name = (assoc-default 'name i)
-                             when name
-                             collect name))))
+    :init 'helm-emms-set-current-playlist
     :candidates (lambda ()
                   (cl-loop for v being the hash-values in emms-cache-db
                            for name      = (assoc-default 'name v)
