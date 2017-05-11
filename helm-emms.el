@@ -32,7 +32,6 @@
 (declare-function emms-stream-add-bookmark "ext:emms-streams" (name url fd type))
 (declare-function emms-stream-save-bookmarks-file "ext:emms-streams")
 (declare-function emms-stream-quit "ext:emms-streams")
-(declare-function with-current-emms-playlist "ext:emms" (&rest body))
 (declare-function emms-playlist-tracks-in-region "ext:emms" (beg end))
 (declare-function emms-playlist-first "ext:emms")
 (declare-function emms-playlist-mode-play-smart "ext:emms-playlist-mode")
