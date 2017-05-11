@@ -143,19 +143,22 @@ may want to use it in helm-emms as well."
     :filtered-candidate-transformer 'helm-adaptive-sort))
 
 (defun helm-emms-dired-transformer (candidates)
-  (cl-loop for d in candidates
+  (cl-loop with files
+           for d in candidates
            for cover = (pcase (expand-file-name "cover_small.jpg" d)
                          ((and c (pred file-exists-p)) c)
                          (_ (car emms-browser-default-covers)))
-           when (directory-files
-                 d nil
-                 (format ".*%s" (emms-player-simple-regexp
-                                 "m3u" "ogg" "flac" "mp3"
-                                 "wav" "mod" "au" "aiff"))
-                 t)
+           when (setq files
+                      (directory-files
+                       d nil
+                       (format ".*%s" (emms-player-simple-regexp
+                                       "m3u" "ogg" "flac" "mp3"
+                                       "wav" "mod" "au" "aiff"))))
            collect (if cover
-                       (cons (concat (emms-browser-make-cover cover)
-                                     (helm-basename d))
+                       (cons (propertize
+                              (concat (emms-browser-make-cover cover)
+                                      (helm-basename d))
+                              'help-echo (mapconcat 'identity files "\n"))
                              d)
                      d)))
 
