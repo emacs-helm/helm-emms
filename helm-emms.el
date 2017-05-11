@@ -24,6 +24,7 @@
 
 (require 'cl-lib)
 (require 'helm)
+(eval-when-compile (require 'emms))
 
 (declare-function emms-streams "ext:emms-streams")
 (declare-function emms-stream-init "ext:emms-streams")
@@ -38,6 +39,8 @@
 (declare-function emms-playlist-new "ext:emms" (&optional name))
 (declare-function emms-player-simple-regexp "ext:emms-player-simple" (&rest extensions))
 (declare-function emms-browser-make-cover "ext:emms-browser")
+(declare-function emms-playlist-current-clear "ext:emms")
+(defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
 (defvar emms-track-description-function)
@@ -133,14 +136,38 @@ may want to use it in helm-emms as well."
     :action
     '(("Play Directory" . (lambda (directory)
                             (emms-play-directory directory)))
-      ("Open dired in file's directory"
-       . (lambda (item)
-           (helm-open-dired
-            (expand-file-name
-             item
-             emms-source-file-default-directory)))))
+      ("Add to Playlist and play (C-u clear current)"
+       . (lambda (directory)
+           (let ((files (helm-emms-directory-files directory t)))
+             (helm-emms-add-files-to-playlist files))))
+      ("Open dired in file's directory" . (lambda (directory)
+                                            (helm-open-dired directory))))
     :candidate-transformer 'helm-emms-dired-transformer
     :filtered-candidate-transformer 'helm-adaptive-sort))
+
+(defun helm-emms-add-files-to-playlist (files)
+  "Add FILES list to playlist.
+
+If a prefix arg is provided clear previous playlist."
+  (with-current-emms-playlist
+    (when helm-current-prefix-arg
+      (emms-playlist-current-clear))
+    (emms-playlist-new)
+    (mapc 'emms-add-playlist-file files)
+    (unless emms-player-playing-p
+      (helm-emms-play-current-playlist))))
+
+(defun helm-emms-directory-files (directory &optional full nosort)
+  "List files in DIRECTORY retaining only music files.
+
+Returns nil when no music files are found."
+  (directory-files
+   directory full
+   (format ".*%s" (emms-player-simple-regexp
+                   ;; FIXME Don't hardcode exts.
+                   "m3u" "ogg" "flac" "mp3"
+                   "wav" "mod" "au" "aiff"))
+   nosort))
 
 (defun helm-emms-dired-transformer (candidates)
   (cl-loop with files
@@ -148,12 +175,7 @@ may want to use it in helm-emms as well."
            for cover = (pcase (expand-file-name "cover_small.jpg" d)
                          ((and c (pred file-exists-p)) c)
                          (_ (car emms-browser-default-covers)))
-           when (setq files
-                      (directory-files
-                       d nil
-                       (format ".*%s" (emms-player-simple-regexp
-                                       "m3u" "ogg" "flac" "mp3"
-                                       "wav" "mod" "au" "aiff"))))
+           when (setq files (helm-emms-directory-files d))
            collect (if cover
                        (cons (propertize
                               (concat (emms-browser-make-cover cover)
@@ -208,14 +230,9 @@ may want to use it in helm-emms as well."
     :candidate-number-limit 9999
     :action '(("Play file" . emms-play-file)
               ("Add to Playlist and play (C-u clear current)"
-               . (lambda (candidate)
-                   (with-current-emms-playlist
-                     (when helm-current-prefix-arg
-                       (emms-playlist-current-clear))
-                     (emms-playlist-new)
-                     (mapc 'emms-add-playlist-file (helm-marked-candidates))
-                     (unless emms-player-playing-p
-                       (helm-emms-play-current-playlist))))))))
+               . (lambda (_candidate)
+                   (helm-emms-add-files-to-playlist
+                    (helm-marked-candidates)))))))
 
 ;;;###autoload
 (defun helm-emms ()
