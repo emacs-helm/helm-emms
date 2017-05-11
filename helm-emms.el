@@ -168,8 +168,7 @@ may want to use it in helm-emms as well."
                          (cdr i))
            into currents
            else collect i into others
-           finally return (append (reverse currents)
-                                  (reverse others))))
+           finally return (append currents others)))
 
 (defun helm-emms-play-current-playlist ()
   "Play current playlist."
