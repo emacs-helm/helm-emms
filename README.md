@@ -1,3 +1,7 @@
+[![MELPA](https://melpa.org/packages/helm-emms-badge.svg)](https://melpa.org/#/helm-emms)
+[![MELPA Stable](https://stable.melpa.org/packages/helm-emms-badge.svg)](https://stable.melpa.org/#/helm-emms)
+
+
 # helm-emms
 
 Basic helm interface to [emms](https://www.gnu.org/software/emms/)
