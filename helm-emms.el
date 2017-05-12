@@ -124,6 +124,7 @@ may want to use it in helm-emms as well."
 
 ;; Don't forget to set `emms-source-file-default-directory'
 (defvar helm-emms--dired-cache nil)
+(defvar helm-emms--directories-added-to-playlist nil)
 (defvar helm-source-emms-dired
   (helm-build-sync-source "Music Directory"
     :init (lambda ()
@@ -151,7 +152,6 @@ may want to use it in helm-emms as well."
 (defun helm-emms--clear-playlist-directories ()
   (setq helm-emms--directories-added-to-playlist nil))
 
-(defvar helm-emms--directories-added-to-playlist nil)
 (defun helm-emms-dired-persistent-action (directory)
   "Play or add DIRECTORY files to emms playlist.
 
