@@ -141,7 +141,7 @@ may want to use it in helm-emms as well."
     '(("Play Directory" . (lambda (directory)
                             (emms-play-directory directory)
                             (push directory helm-emms--directories-added-to-playlist)))
-      ("Add to Playlist and play (C-u clear current)"
+      ("Add to Playlist and play"
        . helm-emms-add-directory-to-playlist)
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
