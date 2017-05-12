@@ -39,6 +39,7 @@
 (declare-function emms-player-simple-regexp "ext:emms-player-simple" (&rest extensions))
 (declare-function emms-browser-make-cover "ext:emms-browser")
 (declare-function emms-playlist-current-clear "ext:emms")
+(declare-function emms-play-directory "ext:emms-source-file")
 (defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
@@ -130,19 +131,44 @@ may want to use it in helm-emms as well."
                   (helm-walk-directory
                    emms-source-file-default-directory
                    :directories 'only
-                   :path 'full)))
+                   :path 'full))
+            (add-hook 'emms-playlist-cleared-hook
+                      'helm-emms--clear-playlist-directories))
     :candidates 'helm-emms--dired-cache
+    :persistent-action 'helm-emms-dired-persistent-action
+    :persistent-help "Play directory or add its files to playlist"
     :action
     '(("Play Directory" . (lambda (directory)
-                            (emms-play-directory directory)))
+                            (emms-play-directory directory)
+                            (push directory helm-emms--directories-added-to-playlist)))
       ("Add to Playlist and play (C-u clear current)"
-       . (lambda (directory)
-           (let ((files (helm-emms-directory-files directory t)))
-             (helm-emms-add-files-to-playlist files))))
+       . helm-emms-add-directory-to-playlist)
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
     :candidate-transformer 'helm-emms-dired-transformer
     :filtered-candidate-transformer 'helm-adaptive-sort))
+
+(defun helm-emms--clear-playlist-directories ()
+  (setq helm-emms--directories-added-to-playlist nil))
+
+(defvar helm-emms--directories-added-to-playlist nil)
+(defun helm-emms-dired-persistent-action (directory)
+  "Play or add DIRECTORY files to emms playlist.
+
+If emms is playing add all files of DIRECTORY to playlist,
+otherwise play directory."
+  (if emms-player-playing-p
+      (progn (helm-emms-add-directory-to-playlist directory)
+             (message "All files from `%s' added to playlist"
+                      (helm-basename directory)))
+    (emms-play-directory directory))
+  (push directory helm-emms--directories-added-to-playlist)
+  (helm-force-update (helm-get-selection nil t)))
+
+(defun helm-emms-add-directory-to-playlist (directory)
+  "Add all files in DIRECTORY to emms playlist."
+  (let ((files (helm-emms-directory-files directory t)))
+    (helm-emms-add-files-to-playlist files)))
 
 (defun helm-emms-add-files-to-playlist (files)
   "Add FILES list to playlist.
@@ -174,16 +200,21 @@ Returns nil when no music files are found."
            for cover = (pcase (expand-file-name "cover_small.jpg" d)
                          ((and c (pred file-exists-p)) c)
                          (_ (car emms-browser-default-covers)))
-           when (setq files (helm-emms-directory-files d))
-           collect (if cover
-                       (cons (propertize
-                              (concat (emms-browser-make-cover cover)
-                                      (helm-basename d))
-                              'help-echo (mapconcat 'identity files "\n"))
-                             d)
-                     d)))
+           for inplaylist = (member d helm-emms--directories-added-to-playlist)
+           for bn = (helm-basename d)
+           when (setq files (helm-emms-directory-files d)) collect
+           (if cover
+               (cons (propertize
+                      (concat (emms-browser-make-cover cover)
+                              (if inplaylist
+                                  (propertize bn 'face 'helm-emms-playlist)
+                                bn))
+                      'help-echo (mapconcat 'identity files "\n"))
+                     d)
+             d)))
 
 (defvar helm-emms-current-playlist nil)
+
 (defun helm-emms-files-modifier (candidates _source)
   (cl-loop for i in candidates
            if (member (cdr i) helm-emms-current-playlist)
@@ -205,10 +236,12 @@ Returns nil when no music files are found."
     (setq emms-playlist-buffer (emms-playlist-new)))
   (setq helm-emms-current-playlist
         (with-current-buffer emms-playlist-buffer
-          (cl-loop for i in (emms-playlist-tracks-in-region
-                             (point-min) (point-max))
-                   when (assoc-default 'name i)
-                   collect it))))
+          (save-excursion
+            (goto-char (point-min))
+            (cl-loop for i in (reverse (emms-playlist-tracks-in-region
+                                        (point-min) (point-max)))
+                     when (assoc-default 'name i)
+                     collect it)))))
 
 (defvar helm-source-emms-files
   (helm-build-sync-source "Emms files"
