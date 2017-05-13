@@ -24,7 +24,7 @@
 
 (require 'cl-lib)
 (require 'helm)
-(eval-when-compile (require 'emms))
+(require 'emms)
 
 (declare-function emms-streams "ext:emms-streams")
 (declare-function emms-stream-init "ext:emms-streams")
@@ -40,6 +40,8 @@
 (declare-function emms-browser-make-cover "ext:emms-browser")
 (declare-function emms-playlist-current-clear "ext:emms")
 (declare-function emms-play-directory "ext:emms-source-file")
+(declare-function emms-play-file "ext:emms-source-file")
+(declare-function emms-add-playlist-file "ext:emms-source-playlist")
 (defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
@@ -269,11 +271,42 @@ Returns nil when no music files are found."
                            collect (cons info name)))
     :filtered-candidate-transformer 'helm-emms-files-modifier
     :candidate-number-limit 9999
+    :persistent-action #'helm-emms-files-persistent-action
+    :persistent-help "Play file or add it to playlist"
     :action '(("Play file" . emms-play-file)
               ("Add to Playlist and play (C-u clear current)"
                . (lambda (_candidate)
                    (helm-emms-add-files-to-playlist
                     (helm-marked-candidates)))))))
+
+(defun helm-emms-files-persistent-action (candidate)
+  (if (or emms-player-playing-p
+          (not (helm-emms-playlist-empty-p)))
+      (with-current-emms-playlist
+        (let (track)
+          (save-excursion
+            (goto-char (point-min))
+            (while (and (not (string=
+                              candidate
+                              (setq track
+                                    (assoc-default
+                                     'name (emms-playlist-track-at
+                                            (point))))))
+                        (not (eobp)))
+              (forward-line 1))
+            (if (string= candidate track)
+                (progn
+                  (emms-playlist-select (point))
+                  (when emms-player-playing-p
+                    (emms-stop))
+                  (emms-start))
+              (emms-add-playlist-file candidate)))))
+    (emms-play-file candidate))
+  (helm-force-update (helm-get-selection nil t)))
+
+(defun helm-emms-playlist-empty-p ()
+  (with-current-emms-playlist
+    (null (emms-playlist-track-at (point)))))
 
 ;;;###autoload
 (defun helm-emms ()
