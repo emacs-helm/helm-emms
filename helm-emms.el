@@ -65,6 +65,17 @@ may want to use it in helm-emms as well."
   :group 'helm-emms
   :type 'boolean)
 
+(defcustom helm-emms-default-sources '(helm-source-emms-dired
+                                       helm-source-emms-files
+                                       helm-source-emms-streams)
+  "The default source for `helm-emms'."
+  :group 'helm-emms
+  :type 'boolean)
+
+(defcustom helm-emms-music-extensions '("mp3" "ogg" "flac" "wav")
+  "Music files default extensions used by helm to find your music."
+  :group 'helm-emms
+  :type '(repeat string))
 
 (defun helm-emms-stream-edit-bookmark (elm)
   "Change the information of current emms-stream bookmark from helm."
@@ -188,10 +199,8 @@ If a prefix arg is provided clear previous playlist."
 Returns nil when no music files are found."
   (directory-files
    directory full
-   (format ".*%s" (emms-player-simple-regexp
-                   ;; FIXME Don't hardcode exts.
-                   "m3u" "ogg" "flac" "mp3"
-                   "wav" "mod" "au" "aiff"))
+   (format ".*%s" (apply #'emms-player-simple-regexp
+                         helm-emms-music-extensions))
    nosort))
 
 (defun helm-emms-dired-transformer (candidates)
@@ -270,9 +279,7 @@ Returns nil when no music files are found."
 (defun helm-emms ()
   "Preconfigured `helm' for emms sources."
   (interactive)
-  (helm :sources '(helm-source-emms-streams
-                   helm-source-emms-files
-                   helm-source-emms-dired)
+  (helm :sources helm-emms-default-sources
         :buffer "*Helm Emms*"))
 
 
