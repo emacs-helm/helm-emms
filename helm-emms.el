@@ -188,7 +188,7 @@ otherwise play directory."
 
 If a prefix arg is provided clear previous playlist."
   (with-current-emms-playlist
-    (when helm-current-prefix-arg
+    (when (or helm-current-prefix-arg current-prefix-arg)
       (emms-playlist-current-clear))
     (emms-playlist-new)
     (mapc 'emms-add-playlist-file files)
