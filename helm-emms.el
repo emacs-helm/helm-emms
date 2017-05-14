@@ -155,8 +155,7 @@ may want to use it in helm-emms as well."
     '(("Play Directory" . (lambda (directory)
                             (emms-play-directory directory)
                             (push directory helm-emms--directories-added-to-playlist)))
-      ("Add to Playlist and play"
-       . helm-emms-add-directory-to-playlist)
+      ("Add directory" . helm-emms-add-directory-to-playlist)
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
     :candidate-transformer 'helm-emms-dired-transformer
@@ -171,7 +170,7 @@ may want to use it in helm-emms as well."
 If emms is playing add all files of DIRECTORY to playlist,
 otherwise play directory."
   (if emms-player-playing-p
-      (progn (helm-emms-add-directory-to-playlist directory)
+      (progn (emms-add-directory directory)
              (message "All files from `%s' added to playlist"
                       (helm-basename directory)))
     (emms-play-directory directory))
@@ -181,7 +180,8 @@ otherwise play directory."
 (defun helm-emms-add-directory-to-playlist (directory)
   "Add all files in DIRECTORY to emms playlist."
   (let ((files (helm-emms-directory-files directory t)))
-    (helm-emms-add-files-to-playlist files)))
+    (helm-emms-add-files-to-playlist files)
+    (push directory helm-emms--directories-added-to-playlist)))
 
 (defun helm-emms-add-files-to-playlist (files)
   "Add FILES list to playlist.
@@ -190,8 +190,7 @@ If a prefix arg is provided clear previous playlist."
   (with-current-emms-playlist
     (when (or helm-current-prefix-arg current-prefix-arg)
       (emms-playlist-current-clear))
-    (emms-playlist-new)
-    (mapc 'emms-add-playlist-file files)
+    (dolist (f files) (emms-add-playlist-file f))
     (unless emms-player-playing-p
       (helm-emms-play-current-playlist))))
 
