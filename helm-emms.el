@@ -42,6 +42,7 @@
 (declare-function emms-play-directory "ext:emms-source-file")
 (declare-function emms-play-file "ext:emms-source-file")
 (declare-function emms-add-playlist-file "ext:emms-source-playlist")
+(declare-function emms-add-directory "ext:emms-source-file")
 (defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
@@ -150,12 +151,13 @@ may want to use it in helm-emms as well."
                       'helm-emms--clear-playlist-directories))
     :candidates 'helm-emms--dired-cache
     :persistent-action 'helm-emms-dired-persistent-action
-    :persistent-help "Play directory or add its files to playlist"
+    :persistent-help "Play or add directory to playlist (C-u clear playlist)"
     :action
     '(("Play Directory" . (lambda (directory)
                             (emms-play-directory directory)
                             (push directory helm-emms--directories-added-to-playlist)))
-      ("Add directory" . helm-emms-add-directory-to-playlist)
+      ("Add directory to playlist (C-u clear playlist)"
+       . helm-emms-add-directory-to-playlist)
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
     :candidate-transformer 'helm-emms-dired-transformer
@@ -189,6 +191,7 @@ otherwise play directory."
 If a prefix arg is provided clear previous playlist."
   (with-current-emms-playlist
     (when (or helm-current-prefix-arg current-prefix-arg)
+      (emms-stop)
       (emms-playlist-current-clear))
     (dolist (f files) (emms-add-playlist-file f))
     (unless emms-player-playing-p
