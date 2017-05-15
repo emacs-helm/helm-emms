@@ -177,7 +177,7 @@ otherwise play directory."
                       (helm-basename directory)))
     (emms-play-directory directory))
   (push directory helm-emms--directories-added-to-playlist)
-  (helm-force-update (helm-get-selection nil t)))
+  (helm-force-update))
 
 (defun helm-emms-add-directory-to-playlist (directory)
   "Add all files in DIRECTORY to emms playlist."
@@ -304,7 +304,7 @@ Returns nil when no music files are found."
                   (emms-start))
               (emms-add-playlist-file candidate)))))
     (emms-play-file candidate))
-  (helm-force-update (helm-get-selection nil t)))
+  (helm-force-update))
 
 (defun helm-emms-playlist-empty-p ()
   (with-current-emms-playlist
