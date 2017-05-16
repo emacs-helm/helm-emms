@@ -230,9 +230,14 @@ Returns nil when no music files are found."
 
 (defun helm-emms-files-modifier (candidates _source)
   (cl-loop for i in candidates
+           for playing = (assoc-default 'info-title
+                          (emms-playlist-current-selected-track))
            if (member (cdr i) helm-emms-current-playlist)
-           collect (cons (propertize (car i)
-                                     'face 'helm-emms-playlist)
+           collect (cons (pcase (car i)
+                           ((and str (guard (and playing
+                                                 (string-match-p playing str))))
+                            (propertize str 'face 'emms-browser-track-face))
+                           (str (propertize str 'face 'helm-emms-playlist)))
                          (cdr i))
            into currents
            else collect i into others
