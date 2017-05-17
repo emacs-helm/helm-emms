@@ -287,29 +287,32 @@ Returns nil when no music files are found."
                     (helm-marked-candidates)))))))
 
 (defun helm-emms-files-persistent-action (candidate)
-  (if (or emms-player-playing-p
-          (not (helm-emms-playlist-empty-p)))
-      (with-current-emms-playlist
-        (let (track)
-          (save-excursion
-            (goto-char (point-min))
-            (while (and (not (string=
-                              candidate
-                              (setq track
-                                    (assoc-default
-                                     'name (emms-playlist-track-at
-                                            (point))))))
-                        (not (eobp)))
-              (forward-line 1))
-            (if (string= candidate track)
-                (progn
-                  (emms-playlist-select (point))
-                  (when emms-player-playing-p
-                    (emms-stop))
-                  (emms-start))
-              (emms-add-playlist-file candidate)))))
-    (emms-play-file candidate))
-  (helm-force-update))
+  (let ((recenter t))
+    (if (or emms-player-playing-p
+            (not (helm-emms-playlist-empty-p)))
+        (with-current-emms-playlist
+          (let (track)
+            (save-excursion
+              (goto-char (point-min))
+              (while (and (not (string=
+                                candidate
+                                (setq track
+                                      (assoc-default
+                                       'name (emms-playlist-track-at
+                                              (point))))))
+                          (not (eobp)))
+                (forward-line 1))
+              (if (string= candidate track)
+                  (progn
+                    (setq recenter (with-helm-window
+                                     (count-lines (window-start) (point))))
+                    (emms-playlist-select (point))
+                    (when emms-player-playing-p
+                      (emms-stop))
+                    (emms-start))
+                (emms-add-playlist-file candidate)))))
+      (emms-play-file candidate))
+    (helm-force-update nil recenter)))
 
 (defun helm-emms-playlist-empty-p ()
   (with-current-emms-playlist
