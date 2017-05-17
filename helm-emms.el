@@ -234,8 +234,10 @@ Returns nil when no music files are found."
                           (emms-playlist-current-selected-track))
            if (member (cdr i) helm-emms-current-playlist)
            collect (cons (pcase (car i)
-                           ((and str (guard (and playing
-                                                 (string-match-p playing str))))
+                           ((and str
+                                 (guard (and playing
+                                             (string-match-p
+                                              (regexp-quote playing) str))))
                             (propertize str 'face 'emms-browser-track-face))
                            (str (propertize str 'face 'helm-emms-playlist)))
                          (cdr i))
