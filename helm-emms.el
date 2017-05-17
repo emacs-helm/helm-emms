@@ -241,7 +241,11 @@ Returns nil when no music files are found."
                          (cdr i))
            into currents
            else collect i into others
-           finally return (append currents others)))
+           finally return (append
+                           (cl-loop for i in helm-emms-current-playlist
+                                    when (rassoc i currents)
+                                    collect it)
+                           others)))
 
 (defun helm-emms-play-current-playlist ()
   "Play current playlist."
