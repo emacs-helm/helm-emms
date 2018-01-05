@@ -24,6 +24,7 @@
 
 (require 'cl-lib)
 (require 'helm)
+(require 'helm-adaptive)
 (require 'emms)
 
 (declare-function emms-streams "ext:emms-streams")
