@@ -143,6 +143,8 @@ may want to use it in helm-emms as well."
 (defvar helm-source-emms-dired
   (helm-build-sync-source "Music Directory"
     :init (lambda ()
+            (cl-assert emms-source-file-default-directory nil
+                       "Incorrect EMMS setup please setup `emms-source-file-default-directory' variable")
             (setq helm-emms--dired-cache
                   (helm-walk-directory
                    emms-source-file-default-directory
