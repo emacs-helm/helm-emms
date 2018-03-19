@@ -141,7 +141,7 @@ may want to use it in helm-emms as well."
 (defvar helm-emms--dired-cache nil)
 (defvar helm-emms--directories-added-to-playlist nil)
 (defvar helm-source-emms-dired
-  (helm-build-sync-source "Music Directory"
+  (helm-build-sync-source "Music Directories"
     :init (lambda ()
             (cl-assert emms-source-file-default-directory nil
                        "Incorrect EMMS setup please setup `emms-source-file-default-directory' variable")
@@ -156,11 +156,20 @@ may want to use it in helm-emms as well."
     :persistent-action 'helm-emms-dired-persistent-action
     :persistent-help "Play or add directory to playlist (C-u clear playlist)"
     :action
-    '(("Play Directory" . (lambda (directory)
-                            (emms-play-directory directory)
-                            (push directory helm-emms--directories-added-to-playlist)))
-      ("Add directory to playlist (C-u clear playlist)"
-       . helm-emms-add-directory-to-playlist)
+    '(("Play Directories"
+       . (lambda (directory)
+           (emms-stop)
+           (emms-playlist-current-clear)
+           (cl-loop with mkds = (helm-marked-candidates)
+                    with current-prefix-arg = nil
+                    with helm-current-prefix-arg = nil
+                    for dir in mkds
+                    do (helm-emms-add-directory-to-playlist dir))))
+      ("Add directories to playlist (C-u clear playlist)"
+       . (lambda (directory)
+           (let ((mkds (helm-marked-candidates)))
+             (cl-loop for dir in mkds
+                      do (helm-emms-add-directory-to-playlist dir))))) 
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
     :candidate-transformer 'helm-emms-dired-transformer
