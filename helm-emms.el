@@ -296,7 +296,8 @@ Returns nil when no music files are found."
                                              (concat artist " - " genre " - " tracknum ": " song))
                            unless (string-match "^\\(http\\|mms\\):" name)
                            collect (cons info name)))
-    :filtered-candidate-transformer 'helm-emms-files-modifier
+    :filtered-candidate-transformer (unless helm-emms-use-track-description-function
+                                      (helm-emms-files-modifier candidates source))
     :candidate-number-limit 9999
     :persistent-action #'helm-emms-files-persistent-action
     :persistent-help "Play file or add it to playlist"
