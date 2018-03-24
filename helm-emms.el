@@ -245,6 +245,7 @@ Returns nil when no music files are found."
            for curtrack = (emms-playlist-current-selected-track)
            for playing = (or (assoc-default 'info-title curtrack)
                              (and helm-emms-use-track-description-function
+                                  (stringp curtrack)
                                   (funcall emms-track-description-function curtrack)))
            if (member (cdr i) helm-emms-current-playlist)
            collect (cons (pcase (car i)
