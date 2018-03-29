@@ -42,8 +42,8 @@
 (declare-function emms-playlist-current-clear "ext:emms")
 (declare-function emms-play-directory "ext:emms-source-file")
 (declare-function emms-play-file "ext:emms-source-file")
-(declare-function emms-add-playlist-file "ext:emms-source-playlist")
 (declare-function emms-add-directory "ext:emms-source-file")
+(declare-function emms-add-file "ext:emms-source-file")
 (defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
@@ -205,7 +205,7 @@ If a prefix arg is provided clear previous playlist."
     (when (or helm-current-prefix-arg current-prefix-arg)
       (emms-stop)
       (emms-playlist-current-clear))
-    (dolist (f files) (emms-add-playlist-file f))
+    (dolist (f files) (emms-add-file f))
     (unless emms-player-playing-p
       (helm-emms-play-current-playlist))))
 
@@ -331,7 +331,7 @@ Returns nil when no music files are found."
                     (when emms-player-playing-p
                       (emms-stop))
                     (emms-start))
-                (emms-add-playlist-file candidate)))))
+                (emms-add-file candidate)))))
       (emms-play-file candidate))
     (helm-force-update nil recenter)))
 
