@@ -145,11 +145,11 @@ may want to use it in helm-emms as well."
     :init (lambda ()
             (cl-assert emms-source-file-default-directory nil
                        "Incorrect EMMS setup please setup `emms-source-file-default-directory' variable")
-            (setq helm-emms--dired-cache
-                  (helm-walk-directory
-                   emms-source-file-default-directory
-                   :directories 'only
-                   :path 'full))
+            ;; User may have a symlinked directory to an external
+            ;; drive or whatever (Issue #11).
+            (let ((dir (file-truename emms-source-file-default-directory)))
+              (setq helm-emms--dired-cache
+                    (helm-walk-directory dir :directories 'only :path 'full)))
             (add-hook 'emms-playlist-cleared-hook
                       'helm-emms--clear-playlist-directories))
     :candidates 'helm-emms--dired-cache
