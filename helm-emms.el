@@ -233,7 +233,7 @@ Returns nil when no music files are found."
 (defun helm-emms-dired-transformer (candidates _source)
   (cl-loop with files
            for d in candidates
-           for cover = (pcase (expand-file-name "cover_small.jpg" d)
+           for cover = (pcase (emms-browser-get-cover-from-path d 'small)
                          ((and c (pred file-exists-p)) c)
                          (_ (car emms-browser-default-covers)))
            for inplaylist = (member d helm-emms--directories-added-to-playlist)
