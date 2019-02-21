@@ -80,6 +80,14 @@ may want to use it in helm-emms as well."
   "Music files default extensions used by helm to find your music."
   :group 'helm-emms
   :type '(repeat string))
+
+(defcustom helm-emms-directory-files-recursive-fn 'helm-emms-walk-directory
+  "The function used to initially parse the user music directory.
+It takes one argument DIR. The default function
+`helm-emms-walk-directory' use lisp to recursively find all directories
+which may be slow on large music directories."
+  :group 'helm-emms
+  :type 'function)
 
 (defun helm-emms-stream-edit-bookmark (elm)
   "Change the information of current emms-stream bookmark from helm."
@@ -149,7 +157,7 @@ may want to use it in helm-emms as well."
             ;; drive or whatever (Issue #11).
             (let ((dir (file-truename emms-source-file-default-directory)))
               (setq helm-emms--dired-cache
-                    (helm-walk-directory dir :directories 'only :path 'full)))
+                    (funcall helm-emms-directory-files-recursive-fn dir)))
             (add-hook 'emms-playlist-cleared-hook
                       'helm-emms--clear-playlist-directories))
     :candidates 'helm-emms--dired-cache
@@ -172,8 +180,11 @@ may want to use it in helm-emms as well."
                       do (helm-emms-add-directory-to-playlist dir))))) 
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
-    :candidate-transformer 'helm-emms-dired-transformer
-    :filtered-candidate-transformer 'helm-adaptive-sort))
+    :filtered-candidate-transformer '(helm-emms-dired-transformer helm-adaptive-sort)))
+
+(defun helm-emms-walk-directory (dir)
+  "The default function to recursively find directories in music directory."
+  (helm-walk-directory dir :directories 'only :path 'full))
 
 (defun helm-emms--clear-playlist-directories ()
   (setq helm-emms--directories-added-to-playlist nil))
@@ -219,7 +230,7 @@ Returns nil when no music files are found."
                          helm-emms-music-extensions))
    nosort))
 
-(defun helm-emms-dired-transformer (candidates)
+(defun helm-emms-dired-transformer (candidates _source)
   (cl-loop with files
            for d in candidates
            for cover = (pcase (expand-file-name "cover_small.jpg" d)
