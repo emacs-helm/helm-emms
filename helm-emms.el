@@ -87,7 +87,14 @@ It takes one argument DIR. The default function
 `helm-emms-walk-directory' use lisp to recursively find all directories
 which may be slow on large music directories."
   :group 'helm-emms
-  :type 'function)
+  :type '(choice (function :tag "Native" helm-emms-walk-directory)
+                 (function :tag "System \"find\" (faster)" helm-emms-walk-directory-with-find)) )
+
+(defcustom helm-emms-find-program "find"
+  "The \"find\" program.
+This is notably used by `helm-emms-walk-directory-with-find'."
+  :group 'helm-emms
+  :type 'string)
 
 (defun helm-emms-stream-edit-bookmark (elm)
   "Change the information of current emms-stream bookmark from helm."
@@ -185,6 +192,13 @@ which may be slow on large music directories."
 (defun helm-emms-walk-directory (dir)
   "The default function to recursively find directories in music directory."
   (helm-walk-directory dir :directories 'only :path 'full))
+
+(defun helm-emms-walk-directory-with-find (dir)
+  "Like `helm-emms-walk-directory' but uses the \"find\" external command.
+The path to the command is set in `helm-emms-find-program'.
+
+Warning: This won't work with directories containing a line break."
+  (process-lines helm-emms-find-program dir "-mindepth" "1" "-type" "d"))
 
 (defun helm-emms--clear-playlist-directories ()
   (setq helm-emms--directories-added-to-playlist nil))
