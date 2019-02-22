@@ -39,6 +39,7 @@
 (declare-function emms-playlist-new "ext:emms" (&optional name))
 (declare-function emms-player-simple-regexp "ext:emms-player-simple" (&rest extensions))
 (declare-function emms-browser-make-cover "ext:emms-browser")
+(declare-function emms-browser-get-cover-from-path "ext:emms-browser")
 (declare-function emms-playlist-current-clear "ext:emms")
 (declare-function emms-play-directory "ext:emms-source-file")
 (declare-function emms-play-file "ext:emms-source-file")
