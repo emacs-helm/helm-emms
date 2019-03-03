@@ -249,7 +249,7 @@ Returns nil when no music files are found."
   (cl-loop with files
            for d in candidates
            for cover = (pcase (emms-browser-get-cover-from-path d 'small)
-                         ((and c (pred file-exists-p)) c)
+                         ((and c (guard (and c (file-exists-p c))) c))
                          (_ (car emms-browser-default-covers)))
            for inplaylist = (member d helm-emms--directories-added-to-playlist)
            for bn = (helm-basename d)
