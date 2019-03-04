@@ -96,6 +96,11 @@ which may be slow on large music directories."
 This is notably used by `helm-emms-walk-directory-with-find'."
   :group 'helm-emms
   :type 'string)
+
+(defcustom helm-emms-dired-directories (list emms-source-file-default-directory)
+  "Directories scanned by `helm-source-emms-dired'."
+  :group 'helm-emms
+  :type '(repeat string))
 
 (defun helm-emms-stream-edit-bookmark (elm)
   "Change the information of current emms-stream bookmark from helm."
@@ -153,19 +158,20 @@ This is notably used by `helm-emms-walk-directory-with-find'."
               ("Edit" . helm-emms-stream-edit-bookmark))
     :filtered-candidate-transformer 'helm-adaptive-sort))
 
-;; Don't forget to set `emms-source-file-default-directory'
+;; Don't forget to set `helm-emms-dired-directories'.
 (defvar helm-emms--dired-cache nil)
 (defvar helm-emms--directories-added-to-playlist nil)
 (defvar helm-source-emms-dired
   (helm-build-sync-source "Music Directories"
     :init (lambda ()
-            (cl-assert emms-source-file-default-directory nil
-                       "Incorrect EMMS setup please setup `emms-source-file-default-directory' variable")
+            (cl-assert helm-emms-dired-directories nil
+                       "Incorrect EMMS setup please setup `helm-emms-dired-directories' variable")
             ;; User may have a symlinked directory to an external
             ;; drive or whatever (Issue #11).
-            (let ((dir (file-truename emms-source-file-default-directory)))
-              (setq helm-emms--dired-cache
-                    (funcall helm-emms-directory-files-recursive-fn dir)))
+            (setq helm-emms--dired-cache
+                  (cl-loop for dir in (mapcar #'file-truename helm-emms-dired-directories)
+                           when (file-exists-p dir)
+                           append (funcall helm-emms-directory-files-recursive-fn dir)))
             (add-hook 'emms-playlist-cleared-hook
                       'helm-emms--clear-playlist-directories))
     :candidates 'helm-emms--dired-cache
