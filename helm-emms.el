@@ -326,9 +326,13 @@ Returns nil when no music files are found."
     :filtered-candidate-transformer 'helm-emms-files-modifier
     :candidate-number-limit 9999
     :persistent-action #'helm-emms-files-persistent-action
-    :persistent-help "Play file or add it to playlist"
-    :action '(("Play file" . emms-play-file)
-              ("Add to Playlist and play (C-u clear current)"
+    :persistent-help "Play file(s) or add to playlist"
+    :action '(("Play file(s)"
+               . (lambda (_candidate)
+                   (emms-play-file (car (helm-marked-candidates)))
+                   (helm-emms-add-files-to-playlist
+                    (cdr (helm-marked-candidates)))))
+              ("Add to playlist (C-u clear current and play)"
                . (lambda (_candidate)
                    (helm-emms-add-files-to-playlist
                     (helm-marked-candidates)))))))
