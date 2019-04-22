@@ -341,7 +341,35 @@ Returns nil when no music files are found."
               ("Add to playlist (C-u clear current and play)"
                . (lambda (_candidate)
                    (helm-emms-add-files-to-playlist
-                    (helm-marked-candidates)))))))
+                    (helm-marked-candidates))))
+              ("Delete tracks from playlist"
+               . helm-emms-delete-tracks))))
+
+(defun helm-emms-goto-track (candidate)
+  (let ((track (emms-track 'file (expand-file-name candidate))))
+    (with-current-buffer emms-playlist-buffer
+      (goto-char (point-min))
+      (when (re-search-forward
+             (format "%s"
+                     (regexp-quote
+                      (helm-basename (assoc-default 'name track) t)))
+             nil t)
+        (forward-line 0)))))
+
+(defun helm-emms-delete-tracks (_candidate)
+  (with-current-buffer emms-playlist-buffer
+    (let ((inhibit-read-only t))
+      (cl-loop for track in (helm-marked-candidates)
+               do
+               (when (helm-emms-goto-track track)
+                 (emms-playlist-simple-delete-track)))
+      (helm-emms-delete-blank-lines))))
+
+(defun helm-emms-delete-blank-lines ()
+  (save-excursion
+    (goto-char (point-min))
+    (while (and (re-search-forward "^$" nil t) (not (eobp)))
+      (delete-blank-lines))))
 
 (defun helm-emms-files-persistent-action (candidate)
   (let ((recenter t))
