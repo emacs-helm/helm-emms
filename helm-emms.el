@@ -77,7 +77,7 @@ may want to use it in helm-emms as well."
   :group 'helm-emms
   :type 'boolean)
 
-(defcustom helm-emms-music-extensions '("mp3" "ogg" "flac" "wav")
+(defcustom helm-emms-music-extensions '("mp3" "ogg" "flac" "wav" "wma")
   "Music files default extensions used by helm to find your music."
   :group 'helm-emms
   :type '(repeat string))
