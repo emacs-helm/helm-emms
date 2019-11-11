@@ -41,6 +41,7 @@
 (declare-function emms-play-file "ext:emms-source-file")
 (declare-function emms-add-directory "ext:emms-source-file")
 (declare-function emms-add-file "ext:emms-source-file")
+(declare-function emms-source-playlist-parse-native "ext:emms-source-playlist")
 (defvar emms-player-playing-p)
 (defvar emms-browser-default-covers)
 (defvar emms-source-file-default-directory)
@@ -48,6 +49,7 @@
 (defvar emms-cache-db)
 (defvar emms-playlist-buffer)
 (defvar emms-stream-list)
+(defvar emms-streams-file)
 
 
 (defgroup helm-emms nil
