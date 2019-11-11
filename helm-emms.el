@@ -28,11 +28,7 @@
 (require 'emms)
 
 (declare-function emms-streams "ext:emms-streams")
-(declare-function emms-stream-init "ext:emms-streams")
-(declare-function emms-stream-delete-bookmark "ext:emms-streams")
-(declare-function emms-stream-add-bookmark "ext:emms-streams" (name url fd type))
-(declare-function emms-stream-save-bookmarks-file "ext:emms-streams")
-(declare-function emms-stream-quit "ext:emms-streams")
+(declare-function emms-streams-install "ext:emms-streams")
 (declare-function emms-playlist-tracks-in-region "ext:emms" (beg end))
 (declare-function emms-playlist-first "ext:emms")
 (declare-function emms-playlist-mode-play-smart "ext:emms-playlist-mode")
@@ -101,61 +97,19 @@ This is notably used by `helm-emms-walk-directory-with-find'."
   "Directories scanned by `helm-source-emms-dired'."
   :group 'helm-emms
   :type '(repeat string))
-
-(defun helm-emms-stream-edit-bookmark (elm)
-  "Change the information of current emms-stream bookmark from helm."
-  (let* ((cur-buf helm-current-buffer)
-         (bookmark (assoc elm emms-stream-list))
-         (name     (read-from-minibuffer "Description: "
-                                         (nth 0 bookmark)))
-         (url      (read-from-minibuffer "URL: "
-                                         (nth 1 bookmark)))
-         (fd       (read-from-minibuffer "Feed Descriptor: "
-                                         (int-to-string (nth 2 bookmark))))
-         (type     (read-from-minibuffer "Type (url, streamlist, or lastfm): "
-                                         (format "%s" (car (last bookmark))))))
-    (save-window-excursion
-      (emms-streams)
-      (when (re-search-forward (concat "^" name) nil t)
-        (forward-line 0)
-        (emms-stream-delete-bookmark)
-        (emms-stream-add-bookmark name url (string-to-number fd) type)
-        (emms-stream-save-bookmarks-file)
-        (emms-stream-quit)
-        (switch-to-buffer cur-buf)))))
-
-(defun helm-emms-stream-delete-bookmark (_candidate)
-  "Delete emms-streams bookmarks from helm."
-  (let* ((cands   (helm-marked-candidates))
-         (bmks    (cl-loop for bm in cands collect
-                        (car (assoc bm emms-stream-list))))
-         (bmk-reg (mapconcat 'regexp-quote bmks "\\|^")))
-    (when (y-or-n-p (format "Really delete radios\n -%s: ? "
-                            (mapconcat 'identity bmks "\n -")))
-      (save-window-excursion
-        (emms-streams)
-        (goto-char (point-min))
-        (cl-loop while (re-search-forward bmk-reg nil t)
-              do (progn (forward-line 0)
-                        (emms-stream-delete-bookmark))
-              finally do (progn
-                           (emms-stream-save-bookmarks-file)
-                           (emms-stream-quit)))))))
 
 (defvar helm-source-emms-streams
   (helm-build-sync-source "Emms Streams"
     :init (lambda ()
             (require 'emms-streams)
-            (emms-stream-init))
+            (unless (file-exists-p emms-streams-file)
+              (emms-streams-install)))
     :candidates (lambda ()
-                  (mapcar 'car emms-stream-list))
-    :action '(("Play" . (lambda (elm)
-                          (let* ((stream (assoc elm emms-stream-list))
-                                 (fn (intern (concat "emms-play-" (symbol-name (car (last stream))))))
-                                 (url (cl-second stream)))
-                            (funcall fn url))))
-              ("Delete" . helm-emms-stream-delete-bookmark)
-              ("Edit" . helm-emms-stream-edit-bookmark))
+                  (mapcar (lambda (track) (cons (car (assoc-default 'metadata track)) track))
+                          (with-temp-buffer
+                            (emms-insert-file-contents emms-streams-file)
+                            (emms-source-playlist-parse-native emms-streams-file))))
+    :action '(("Play" . (lambda (elm) (emms-source-play (lambda () (emms-playlist-insert-track elm))))))
     :filtered-candidate-transformer 'helm-adaptive-sort))
 
 ;; Don't forget to set `helm-emms-dired-directories'.
