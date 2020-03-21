@@ -103,6 +103,7 @@ This is notably used by `helm-emms-walk-directory-with-find'."
   :group 'helm-emms
   :type '(repeat string))
 
+(defvar helm-emms-streams-list nil)
 (defvar helm-source-emms-streams
   (helm-build-sync-source "Emms Streams"
     :init (lambda ()
@@ -111,10 +112,14 @@ This is notably used by `helm-emms-walk-directory-with-find'."
               (emms-streams-install)))
     :candidates (lambda ()
                   (mapcar (lambda (track)
-                            (cons (car (assoc-default 'metadata track)) track))
+                            (cons (car (assoc-default 'metadata track))
+                                  track))
                           (with-temp-buffer
-                            (emms-insert-file-contents emms-streams-file)
-                            (emms-source-playlist-parse-native emms-streams-file))))
+                            (emms-insert-file-contents
+                             emms-streams-file)
+                            (setq helm-emms-streams-list
+                                  (emms-source-playlist-parse-native
+                                   emms-streams-file)))))
     :action '(("Play" . helm-emms-streams-play)
               ("Add new stream (C-u play)" . helm-emms-add-new-stream)
               ("Edit stream (C-u play)" . helm-emms-edit-stream)
@@ -137,7 +142,9 @@ This is notably used by `helm-emms-walk-directory-with-find'."
 When PLAY is non nil play new stream."
   (let ((stream `(*track* (type . streamlist)
                           (name . ,url)
-                          (metadata ,name ,url 1 streamlist))))
+                          (metadata ,name ,url 1 streamlist)))
+        (emms-streams-built-in-list (or helm-emms-streams-list
+                                        emms-streams-built-in-list)))
     (cl-pushnew stream emms-streams-built-in-list :test 'equal)
     (emms-streams-install-file emms-streams-file)
     (when play (emms-play-url url))))
@@ -150,16 +157,20 @@ When PLAY is non nil play new stream."
          (new-name (read-string
                     (format "New name (default %s) : " old-name)
                     nil nil old-name))
-         (new-url  (read-string "New url: " nil nil old-url)))
+         (new-url  (read-string "New url: " nil nil old-url))
+         (emms-streams-built-in-list (or helm-emms-streams-list
+                                        emms-streams-built-in-list)))
     (setq emms-streams-built-in-list
           (delete candidate emms-streams-built-in-list))
     (helm-emms-add-emms-stream helm-current-prefix-arg new-name new-url)))
 
 (defun helm-emms-delete-stream (candidate)
   "Delete stream CANDIDATE from `emms-streams-file'."
-  (setq emms-streams-built-in-list
-        (delete candidate emms-streams-built-in-list))
-  (emms-streams-install-file emms-streams-file))
+  (let ((emms-streams-built-in-list (or helm-emms-streams-list
+                                        emms-streams-built-in-list)))
+    (setq emms-streams-built-in-list
+          (delete candidate emms-streams-built-in-list))
+    (emms-streams-install-file emms-streams-file)))
     
 ;; Don't forget to set `helm-emms-dired-directories'.
 (defvar helm-emms--dired-cache nil)
