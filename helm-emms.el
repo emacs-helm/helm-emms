@@ -137,12 +137,12 @@ Use `emms-streams-built-in-list' entries as default."
                                             (append (list (cons name url))
                                                     helm-emms-streams-list))
                    (cl-incf count)
-                   (when (and (> count 0)
-                              (y-or-n-p "Add a new stream? "))
+                   (when (y-or-n-p "Add a new stream? ")
                      (record))
                    (when prefarg
                      (emms-play-url url)))))
-      (record))))
+      (record))
+    (message "%s new stream(s) added" count)))
 
 (defun helm-emms-delete-stream (_candidate)
   "Delete marked streams."
