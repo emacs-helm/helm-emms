@@ -126,15 +126,23 @@ Use `emms-streams-built-in-list' entries as default."
 
 (defun helm-emms-add-new-stream (_candidate)
   "Action to add a new stream to `helm-emms-streams-list'."
-  (let ((prefarg (or helm-current-prefix-arg
-                     current-prefix-arg))
-        (name (read-string "Stream name: "))
-        (url  (read-string "Stream url: ")))
-    (customize-save-variable 'helm-emms-streams-list
-                             (append (list (cons name url))
-                                     helm-emms-streams-list))
-    (when prefarg
-      (emms-play-url url))))
+  (let ((count 0)
+        (prefarg (or helm-current-prefix-arg
+                     current-prefix-arg)))
+    (cl-labels ((record
+                 ()
+                 (let ((name (read-string "Stream name: "))
+                       (url  (read-string "Stream url: ")))
+                   (customize-save-variable 'helm-emms-streams-list
+                                            (append (list (cons name url))
+                                                    helm-emms-streams-list))
+                   (cl-incf count)
+                   (when (and (> count 0)
+                              (y-or-n-p "Add a new stream? "))
+                     (record))
+                   (when prefarg
+                     (emms-play-url url)))))
+      (record))))
 
 (defun helm-emms-delete-stream (_candidate)
   "Delete marked streams."
