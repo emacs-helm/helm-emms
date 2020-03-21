@@ -27,9 +27,6 @@
 (require 'helm-adaptive)
 (require 'emms)
 
-(declare-function emms-streams "ext:emms-streams")
-(declare-function emms-streams-install "ext:emms-streams")
-(declare-function emms-streams-install-file "ext:emms-streams")
 (declare-function emms-play-url "ext:emms-streams")
 (declare-function emms-playlist-tracks-in-region "ext:emms" (beg end))
 (declare-function emms-playlist-first "ext:emms")
@@ -50,8 +47,6 @@
 (defvar emms-track-description-function)
 (defvar emms-cache-db)
 (defvar emms-playlist-buffer)
-(defvar emms-stream-list)
-(defvar emms-streams-file)
 (defvar emms-streams-built-in-list)
 
 
@@ -103,75 +98,51 @@ This is notably used by `helm-emms-walk-directory-with-find'."
   :group 'helm-emms
   :type '(repeat string))
 
-(defvar helm-emms-streams-list nil)
+(defcustom helm-emms-streams-list nil
+  "List of streams for emms streams.
+When nil use `emms-streams-built-in-list' entries as default."
+  :type '(alist :key-type string :value-type string)
+  :group 'helm-emms)
+
+(defun helm-emms-stream-setup-default-alist ()
+  "Setup default value of `helm-emms-streams-list'.
+Use `emms-streams-built-in-list' entries as default."
+  (cl-loop for elm in emms-streams-built-in-list
+           for assoc = (assoc-default 'metadata elm)
+           collect (cons (car assoc) (cadr assoc))))
+
 (defvar helm-source-emms-streams
   (helm-build-sync-source "Emms Streams"
     :init (lambda ()
             (require 'emms-streams)
-            (unless (file-exists-p emms-streams-file)
-              (emms-streams-install)))
-    :candidates (lambda ()
-                  (mapcar (lambda (track)
-                            (cons (car (assoc-default 'metadata track))
-                                  track))
-                          (with-temp-buffer
-                            (emms-insert-file-contents
-                             emms-streams-file)
-                            (setq helm-emms-streams-list
-                                  (emms-source-playlist-parse-native
-                                   emms-streams-file)))))
-    :action '(("Play" . helm-emms-streams-play)
+            (unless helm-emms-streams-list
+              (setq helm-emms-streams-list
+                    (helm-emms-stream-setup-default-alist))))
+    :candidates (lambda () helm-emms-streams-list)
+    :action '(("Play" . emms-play-url)
               ("Add new stream (C-u play)" . helm-emms-add-new-stream)
-              ("Edit stream (C-u play)" . helm-emms-edit-stream)
-              ("Delete stream" . helm-emms-delete-stream))
+              ("Delete stream(s)" . helm-emms-delete-stream))
     :filtered-candidate-transformer 'helm-adaptive-sort))
 
-(defun helm-emms-streams-play (candidate)
-  "Play stream CANDIDATE."
-  (let ((emms-src (lambda () (emms-playlist-insert-track candidate))))
-    (emms-source-play emms-src)))
-
 (defun helm-emms-add-new-stream (_candidate)
-  "Action to add a new stream to `emms-streams-file'."
-  (let ((name (read-string "Stream name: "))
+  "Action to add a new stream to `helm-emms-streams-list'."
+  (let ((prefarg (or helm-current-prefix-arg
+                     current-prefix-arg))
+        (name (read-string "Stream name: "))
         (url  (read-string "Stream url: ")))
-    (helm-emms-add-emms-stream helm-current-prefix-arg name url)))
+    (customize-save-variable 'helm-emms-streams-list
+                             (append (list (cons name url))
+                                     helm-emms-streams-list))
+    (when prefarg
+      (emms-play-url url))))
 
-(defun helm-emms-add-emms-stream (play name url)
-  "Add new stream to `emms-streams-file'.
-When PLAY is non nil play new stream."
-  (let ((stream `(*track* (type . streamlist)
-                          (name . ,url)
-                          (metadata ,name ,url 1 streamlist)))
-        (emms-streams-built-in-list (or helm-emms-streams-list
-                                        emms-streams-built-in-list)))
-    (cl-pushnew stream emms-streams-built-in-list :test 'equal)
-    (emms-streams-install-file emms-streams-file)
-    (when play (emms-play-url url))))
+(defun helm-emms-delete-stream (_candidate)
+  "Delete marked streams."
+  (cl-loop for url in (helm-marked-candidates)
+           do (customize-save-variable 'helm-emms-streams-list
+                    (delete (rassoc url helm-emms-streams-list)
+                            helm-emms-streams-list))))
 
-(defun helm-emms-edit-stream (candidate)
-  "Edit stream CANDIDATE and write it to `emms-streams-file'."
-  (let* ((metadata (assoc-default 'metadata candidate))
-         (old-name (car metadata))
-         (old-url  (cadr metadata))
-         (new-name (read-string
-                    (format "New name (default %s) : " old-name)
-                    nil nil old-name))
-         (new-url  (read-string "New url: " nil nil old-url))
-         (emms-streams-built-in-list (or helm-emms-streams-list
-                                        emms-streams-built-in-list)))
-    (setq emms-streams-built-in-list
-          (delete candidate emms-streams-built-in-list))
-    (helm-emms-add-emms-stream helm-current-prefix-arg new-name new-url)))
-
-(defun helm-emms-delete-stream (candidate)
-  "Delete stream CANDIDATE from `emms-streams-file'."
-  (let ((emms-streams-built-in-list (or helm-emms-streams-list
-                                        emms-streams-built-in-list)))
-    (setq emms-streams-built-in-list
-          (delete candidate emms-streams-built-in-list))
-    (emms-streams-install-file emms-streams-file)))
-    
 ;; Don't forget to set `helm-emms-dired-directories'.
 (defvar helm-emms--dired-cache nil)
 (defvar helm-emms--directories-added-to-playlist nil)
