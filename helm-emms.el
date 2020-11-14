@@ -3,7 +3,7 @@
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
 ;; Version: 1.3
-;; Package-Requires: ((helm "1.5") (emms "0.0") (cl-lib "0.5") (emacs "24.1"))
+;; Package-Requires: ((helm "1.5") (emms "6.0") (cl-lib "0.5") (emacs "24.1"))
 
 ;; X-URL: https://github.com/emacs-helm/helm-emms
 
@@ -47,6 +47,7 @@
 (defvar emms-track-description-function)
 (defvar emms-cache-db)
 (defvar emms-playlist-buffer)
+(defvar emms-streams-file)
 (defvar emms-streams-built-in-list)
 
 
@@ -104,10 +105,22 @@ When nil use `emms-streams-built-in-list' entries as default."
   :type '(alist :key-type string :value-type string)
   :group 'helm-emms)
 
+(defun helm-emms--read-streams-from-streams-file ()
+  "Read streams from `emms-streams-file' as track list.
+Return nil if `emms-streams-file' is nil or not a readable file."
+  ;; `emms-streams-file' is a native EMMS playlist of streams, read it as it is.
+  (when (and emms-streams-file
+             (file-readable-p emms-streams-file))
+    (read-from-string (with-temp-buffer
+                        (insert-file-contents emms-streams-file)
+                        (buffer-substring (point-min) (point-max))))))
+
 (defun helm-emms-stream-setup-default-alist ()
   "Setup default value of `helm-emms-streams-list'.
-Use `emms-streams-built-in-list' entries as default."
-  (cl-loop for elm in emms-streams-built-in-list
+Source `emms-streams-file' if non-nil to retrieve default
+entries, or use `emms-streams-built-in-list'."
+  (cl-loop for elm in (or (helm-emms--read-streams-from-streams-file)
+                          emms-streams-built-in-list)
            for assoc = (assoc-default 'metadata elm)
            collect (cons (car assoc) (cadr assoc))))
 
