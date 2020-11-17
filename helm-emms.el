@@ -428,4 +428,4 @@ Returns nil when no music files are found."
 ;; indent-tabs-mode: nil
 ;; End:
 
-;;; helm-emms ends here
+;;; helm-emms.el ends here
