@@ -2,10 +2,11 @@
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
+;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Version: 1.3
 ;; Package-Requires: ((helm "1.5") (emms "6.0") (cl-lib "0.5") (emacs "24.1"))
-
-;; X-URL: https://github.com/emacs-helm/helm-emms
+;; Keywords: multimedia, emms
+;; URL: https://github.com/emacs-helm/helm-emms
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
