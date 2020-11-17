@@ -111,9 +111,9 @@ Return nil if `emms-streams-file' is nil or not a readable file."
   ;; `emms-streams-file' is a native EMMS playlist of streams, read it as it is.
   (when (and emms-streams-file
              (file-readable-p emms-streams-file))
-    (read-from-string (with-temp-buffer
-                        (insert-file-contents emms-streams-file)
-                        (buffer-substring (point-min) (point-max))))))
+    (car (read-from-string (with-temp-buffer
+                             (insert-file-contents emms-streams-file)
+                             (buffer-substring (point-min) (point-max)))))))
 
 (defun helm-emms-stream-setup-default-alist ()
   "Setup default value of `helm-emms-streams-list'.
