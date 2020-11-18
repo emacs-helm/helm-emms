@@ -284,10 +284,9 @@ Returns nil when no music files are found."
 (defun helm-emms-files-modifier (candidates _source)
   (cl-loop for i in candidates
            for curtrack = (emms-playlist-current-selected-track)
-           for playing = (or (assoc-default 'info-title curtrack)
-                             (and helm-emms-use-track-description-function
-                                  (stringp curtrack)
-                                  (funcall emms-track-description-function curtrack)))
+           for playing = (or (and helm-emms-use-track-description-function
+                                  (funcall emms-track-description-function curtrack))
+                             (assoc-default 'info-title curtrack))
            if (member (cdr i) helm-emms-current-playlist)
            collect (cons (pcase (car i)
                            ((and str
