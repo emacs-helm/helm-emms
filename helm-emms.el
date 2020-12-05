@@ -58,7 +58,7 @@
 
 (defface helm-emms-playlist
     '((t (:foreground "Springgreen4" :underline t)))
-  "Face used for tracks in current emms playlist."
+  "Face used for tracks and directories in current emms playlist."
   :group 'helm-emms)
 
 (defcustom helm-emms-use-track-description-function nil
@@ -269,15 +269,14 @@ Returns nil when no music files are found."
            for inplaylist = (member d helm-emms--directories-added-to-playlist)
            for bn = (helm-basename d)
            when (setq files (helm-emms-directory-files d)) collect
-           (if cover
-               (cons (propertize
-                      (concat (emms-browser-make-cover cover)
-                              (if inplaylist
-                                  (propertize bn 'face 'helm-emms-playlist)
-                                bn))
-                      'help-echo (mapconcat 'identity files "\n"))
-                     d)
-             d)))
+           (cons (let* ((cover-image (and cover (emms-browser-make-cover cover)))
+                        (title (if cover bn d))
+                        (title-with-face (if inplaylist
+                                             (propertize title 'face 'helm-emms-playlist)
+                                           title)))
+                   (propertize (concat cover-image title-with-face)
+                               'help-echo (mapconcat 'identity files "\n")))
+                 d)))
 
 (defvar helm-emms-current-playlist nil)
 
