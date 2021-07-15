@@ -299,7 +299,8 @@ Returns nil when no music files are found."
                            ((and str
                                  (guard (and playing
                                              (string-match-p
-                                              (concat (regexp-quote playing) "\\'") str))))
+                                              (concat ": " (regexp-quote playing) "\\'")
+                                              str))))
                             (propertize str 'face 'emms-browser-track-face))
                            (str (propertize str 'face 'helm-emms-playlist)))
                          (cdr i))
