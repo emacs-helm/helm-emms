@@ -210,7 +210,7 @@ entries, or use `emms-streams-built-in-list'."
                       do (helm-emms-add-directory-to-playlist dir))))) 
       ("Open dired in file's directory" . (lambda (directory)
                                             (helm-open-dired directory))))
-    :filtered-candidate-transformer '(helm-emms-dired-transformer helm-adaptive-sort)
+    :filtered-candidate-transformer '(helm-adaptive-sort helm-emms-dired-transformer)
     :group 'helm-emms))
 
 (defun helm-emms-walk-directory (dir)
@@ -278,7 +278,7 @@ Returns nil when no music files are found."
            for bn = (helm-basename d)
            when (setq files (helm-emms-directory-files d)) collect
            (cons (let* ((cover-image (and cover (emms-browser-make-cover cover)))
-                        (title (if cover bn d))
+                        (title (if cover (propertize d 'display bn) d))
                         (title-with-face (if inplaylist
                                              (propertize title 'face 'helm-emms-playlist)
                                            title)))
