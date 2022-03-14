@@ -289,23 +289,17 @@ Returns nil when no music files are found."
 (defvar helm-emms-current-playlist nil)
 
 (defun helm-emms-files-modifier (candidates _source)
-  (cl-loop for i in candidates
+  (cl-loop for (name . file) in candidates
            for curtrack = (emms-playlist-current-selected-track)
-           for playing = (or (and helm-emms-use-track-description-function
-                                  (funcall emms-track-description-function curtrack))
-                             (assoc-default 'info-title curtrack))
-           if (member (cdr i) helm-emms-current-playlist)
-           collect (cons (pcase (car i)
-                           ((and str
-                                 (guard (and playing
-                                             (string-match-p
-                                              (concat ": " (regexp-quote playing) "\\'")
-                                              str))))
-                            (propertize str 'face 'emms-browser-track-face))
-                           (str (propertize str 'face 'helm-emms-playlist)))
-                         (cdr i))
+           for playing-file = (assoc-default 'name curtrack)
+           if (member file helm-emms-current-playlist)
+           collect (cons
+                    (if (string= playing-file file)
+                        (propertize name 'face 'emms-browser-track-face)
+                      (propertize name 'face 'helm-emms-playlist))
+                    file)
            into currents
-           else collect i into others
+           else collect (cons name file) into others
            finally return (append
                            (cl-loop for i in helm-emms-current-playlist
                                     when (rassoc i currents)
