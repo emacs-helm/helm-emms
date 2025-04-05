@@ -34,6 +34,7 @@
 (require 'cl-lib)
 (require 'helm)
 (require 'helm-adaptive)
+(require 'helm-utils)
 (require 'emms)
 
 (declare-function emms-play-url "ext:emms-streams")
@@ -194,22 +195,22 @@ entries, or use `emms-streams-built-in-list'."
     :persistent-action 'helm-emms-dired-persistent-action
     :persistent-help "Play or add directory to playlist (C-u clear playlist)"
     :action
-    '(("Play Directories"
-       . (lambda (directory)
-           (emms-stop)
-           (emms-playlist-current-clear)
-           (cl-loop with mkds = (helm-marked-candidates)
-                    with current-prefix-arg = nil
-                    with helm-current-prefix-arg = nil
-                    for dir in mkds
-                    do (helm-emms-add-directory-to-playlist dir))))
+    `(("Play Directories"
+       . ,(lambda (_directory)
+            (emms-stop)
+            (emms-playlist-current-clear)
+            (cl-loop with mkds = (helm-marked-candidates)
+                     with current-prefix-arg = nil
+                     with helm-current-prefix-arg = nil
+                     for dir in mkds
+                     do (helm-emms-add-directory-to-playlist dir))))
       ("Add directories to playlist (C-u clear playlist)"
-       . (lambda (directory)
-           (let ((mkds (helm-marked-candidates)))
-             (cl-loop for dir in mkds
-                      do (helm-emms-add-directory-to-playlist dir))))) 
-      ("Open dired in file's directory" . (lambda (directory)
-                                            (helm-open-dired directory))))
+       . ,(lambda (_directory)
+            (let ((mkds (helm-marked-candidates)))
+              (cl-loop for dir in mkds
+                       do (helm-emms-add-directory-to-playlist dir))))) 
+      ("Open dired in file's directory" . ,(lambda (directory)
+                                             (helm-open-dired directory))))
     :filtered-candidate-transformer '(helm-adaptive-sort helm-emms-dired-transformer)
     :group 'helm-emms))
 
@@ -343,15 +344,15 @@ Returns nil when no music files are found."
     :candidate-number-limit 9999
     :persistent-action #'helm-emms-files-persistent-action
     :persistent-help "Play file(s) or add to playlist"
-    :action '(("Play file(s)"
-               . (lambda (_candidate)
-                   (emms-play-file (car (helm-marked-candidates)))
-                   (helm-emms-add-files-to-playlist
-                    (cdr (helm-marked-candidates)))))
+    :action `(("Play file(s)"
+               . ,(lambda (_candidate)
+                    (emms-play-file (car (helm-marked-candidates)))
+                    (helm-emms-add-files-to-playlist
+                     (cdr (helm-marked-candidates)))))
               ("Add to playlist (C-u clear current and play)"
-               . (lambda (_candidate)
-                   (helm-emms-add-files-to-playlist
-                    (helm-marked-candidates))))
+               . ,(lambda (_candidate)
+                    (helm-emms-add-files-to-playlist
+                     (helm-marked-candidates))))
               ("Delete tracks from playlist"
                . helm-emms-delete-tracks))
     :group 'helm-emms))
