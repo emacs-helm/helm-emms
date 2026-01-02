@@ -146,6 +146,7 @@ entries, or use `emms-streams-built-in-list'."
               ("Add new stream (C-u play)" . helm-emms-add-new-stream)
               ("Delete stream(s)" . helm-emms-delete-stream))
     :filtered-candidate-transformer 'helm-adaptive-sort
+    :migemo t
     :group 'helm-emms))
 
 (defun helm-emms-add-new-stream (_candidate)
@@ -208,10 +209,11 @@ entries, or use `emms-streams-built-in-list'."
        . ,(lambda (_directory)
             (let ((mkds (helm-marked-candidates)))
               (cl-loop for dir in mkds
-                       do (helm-emms-add-directory-to-playlist dir))))) 
+                       do (helm-emms-add-directory-to-playlist dir)))))
       ("Open dired in file's directory" . ,(lambda (directory)
                                              (helm-open-dired directory))))
     :filtered-candidate-transformer '(helm-adaptive-sort helm-emms-dired-transformer)
+    :migemo t
     :group 'helm-emms))
 
 (defun helm-emms-walk-directory (dir)
@@ -355,6 +357,7 @@ Returns nil when no music files are found."
                      (helm-marked-candidates))))
               ("Delete tracks from playlist"
                . helm-emms-delete-tracks))
+    :migemo t
     :group 'helm-emms))
 
 (defun helm-emms-goto-track (candidate)
